@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 
-const PROD = 'https://api.binance.com';
+const PROD = 'https://api.binance.us';
 const TEST = 'https://testnet.binance.vision';
 
 function base(testnet) { return testnet ? TEST : PROD; }

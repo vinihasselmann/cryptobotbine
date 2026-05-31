@@ -1,6 +1,6 @@
 import WebSocket from 'ws';
 
-const WS_BASE = 'wss://stream.binance.com:9443/ws';
+const WS_BASE = 'wss://stream.binance.us:9443/ws';
 const WS_TEST = 'wss://testnet.binance.vision/ws';
 
 export class BinanceKlineStream {
