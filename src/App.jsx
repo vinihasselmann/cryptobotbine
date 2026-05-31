@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useWallet }       from './hooks/useWallet';
 import { useTradingBot }   from './hooks/useTradingBot';
-import { CHAINS, TOKENS }  from './services/dexAggregator';
 import { TIMEFRAMES }      from './services/priceService';
 import {
   clearJournal,
@@ -577,14 +576,6 @@ export default function App() {
           </div>
 
           {/* DEX Aggregator card */}
-          {dexQuotes && (
-            <div className="card">
-              <div className="card-title">DEX Aggregator</div>
-              {dexQuotes.all?.map((q, i) => (
-                <DEXQuoteRow key={i} quote={q} isBest={i === 0} />
-              ))}
-            </div>
-          )}
 
           <LearningPanel
             summary={learningSummary}
@@ -798,7 +789,7 @@ export default function App() {
                 <button
                   className="btn-start"
                   onClick={start}
-                  disabled={config.executionMode === 'real' && !wallet.connected}
+                  disabled={false}
                 >
                   ▶ Iniciar Bot
                 </button>
