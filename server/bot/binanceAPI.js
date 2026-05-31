@@ -1,9 +1,11 @@
 import crypto from 'node:crypto';
 
-const PROD = 'https://api.binance.us';
+const PROD_PUBLIC  = 'https://api.binance.com';   // dados públicos (klines, ticker)
+const PROD_PRIVATE = 'https://api.binance.us';    // ordens reais (autenticadas)
 const TEST = 'https://testnet.binance.vision';
 
-function base(testnet) { return testnet ? TEST : PROD; }
+function basePublic(testnet)  { return testnet ? TEST : PROD_PUBLIC; }
+function basePrivate(testnet) { return testnet ? TEST : PROD_PRIVATE; }
 
 function sign(params, secret) {
   const qs = new URLSearchParams(params).toString();
@@ -13,7 +15,7 @@ function sign(params, secret) {
 
 async function pub(path, params = {}, testnet = false) {
   const qs = new URLSearchParams(params).toString();
-  const res = await fetch(`${base(testnet)}${path}?${qs}`);
+  const res = await fetch(`${basePublic(testnet)}${path}?${qs}`);
   const data = await res.json();
   if (!res.ok) throw new Error(data.msg || `Binance ${res.status} ${path}`);
   return data;
@@ -21,7 +23,7 @@ async function pub(path, params = {}, testnet = false) {
 
 async function priv(method, path, params, apiKey, secret, testnet = false) {
   const signed = sign({ ...params, timestamp: Date.now() }, secret);
-  const url = method === 'GET' ? `${base(testnet)}${path}?${signed}` : `${base(testnet)}${path}`;
+  const url = method === 'GET' ? `${basePrivate(testnet)}${path}?${signed}` : `${basePrivate(testnet)}${path}`;
   const opts = { method, headers: { 'X-MBX-APIKEY': apiKey } };
   if (method === 'POST') { opts.headers['Content-Type'] = 'application/x-www-form-urlencoded'; opts.body = signed; }
   const res = await fetch(url, opts);

@@ -360,10 +360,11 @@ function IntelligencePanel({ adaptiveModel, riskState, backendOnline }) {
   );
 }
 
+const BINANCE_PAIRS = ['ETH', 'BTC', 'SOL', 'ARB'];
+
 export default function App() {
-  const [chain,    setChain]    = useState('arbitrum');
   const [basePair, setBasePair] = useState('ETH');
-  const quotePair = 'USDC';
+  const quotePair = 'USDT';
   const [timeframe, setTimeframe] = useState('1m');
   const [strategy, setStrategy] = useState('ensemble');
   const [learningSummary, setLearningSummary] = useState(() => getLearningSummary(getJournal()));
@@ -382,22 +383,12 @@ export default function App() {
     },
   });
 
-  const { wallet, connecting, connect, disconnect, switchChain } = useWallet();
-
   const {
     botState, candles, prediction, trades, portfolio, stats,
-    dexQuotes, currentPrice, priceChange24h, logs, pendingTx,
+    currentPrice, priceChange24h, logs,
     adaptiveModel, riskState,
     start, pause, resume, stop,
-  } = useTradingBot({ wallet, chain, basePair, quotePair, strategy, timeframe, config });
-
-  // ── Memos ─────────────────────────────────────────────────────────────────
-
-  const availableTokens = useMemo(
-    () => Object.keys(TOKENS[chain] || {}).filter((t) => t !== 'USDC'),
-    [chain]
-  );
-
+  } = useTradingBot({ basePair, quotePair, strategy, timeframe, config });
 
   // ── Computed ──────────────────────────────────────────────────────────────
 
@@ -486,7 +477,7 @@ export default function App() {
           <span className="logo-icon">⚡</span>
           <div>
             <div className="logo-title">DEFI BOT ML</div>
-            <div className="logo-sub">Multi-chain · Uniswap · AI</div>
+            <div className="logo-sub">Binance · AI · 24/7</div>
           </div>
         </div>
 
@@ -511,23 +502,13 @@ export default function App() {
         </div>
 
         <div className="header-right">
-          {pendingTx && (
-            <a
-              className="pending-tx"
-              href={`${CHAINS[chain]?.explorer}/tx/${pendingTx.hash}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              ⏳ {pendingTx.type.toUpperCase()}
-            </a>
-          )}
-          <WalletButton
-            wallet={wallet}
-            connecting={connecting}
-            connect={connect}
-            disconnect={disconnect}
-            switchChain={switchChain}
-          />
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+            {backendOnline ? (
+              <span style={{ color: 'var(--green)' }}>● EC2 online</span>
+            ) : (
+              <span style={{ color: 'var(--red)' }}>● EC2 offline</span>
+            )}
+          </div>
         </div>
       </header>
 
@@ -848,9 +829,9 @@ export default function App() {
                 </button>
               ))}
             </div>
-            {config.executionMode === 'real' && !wallet.connected && (
+            {config.executionMode === 'real' && (
               <div className="warning-box">
-                ⚠️ Conecte sua MetaMask para operar em modo real.
+                ⚠️ Modo real usa Binance API Key configurada no servidor.
               </div>
             )}
             {config.executionMode === 'paper' && (
@@ -862,38 +843,19 @@ export default function App() {
             )}
           </div>
 
-          {/* Network & pair card */}
+          {/* Pair selector */}
           <div className="card">
-            <div className="card-title">Rede & Par</div>
-            <div className="form-group">
-              <label className="form-label">Blockchain</label>
-              <div className="chain-options">
-                {Object.entries(CHAINS).map(([key, c]) => (
-                  <button
-                    key={key}
-                    className={'chain-opt' + (chain === key ? ' active' : '')}
-                    style={chain === key ? { borderColor: c.color, color: c.color } : {}}
-                    onClick={() => {
-                      setChain(key);
-                      setBasePair(Object.keys(TOKENS[key])[0]);
-                    }}
-                  >
-                    {c.shortName}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Token Base</label>
-              <select
-                className="form-select"
-                value={basePair}
-                onChange={(e) => setBasePair(e.target.value)}
-              >
-                {availableTokens.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
+            <div className="card-title">Par (Binance.US)</div>
+            <div className="chain-options">
+              {BINANCE_PAIRS.map(pair => (
+                <button
+                  key={pair}
+                  className={'chain-opt' + (basePair === pair ? ' active' : '')}
+                  onClick={() => setBasePair(pair)}
+                >
+                  {pair}/USDT
+                </button>
+              ))}
             </div>
           </div>
 
