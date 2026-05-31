@@ -3,7 +3,7 @@ const BASE = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8787') + '/api';
 async function post(path, body) {
   const res = await fetch(`${BASE}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`Backend ${res.status}: ${path}`);
@@ -11,7 +11,9 @@ async function post(path, body) {
 }
 
 async function get(path) {
-  const res = await fetch(`${BASE}${path}`);
+  const res = await fetch(`${BASE}${path}`, {
+    headers: { 'ngrok-skip-browser-warning': 'true' },
+  });
   if (!res.ok) throw new Error(`Backend ${res.status}: ${path}`);
   return res.json();
 }

@@ -2,7 +2,7 @@ const API_BASE = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8787') + '/a
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     ...options,
   });
   if (!response.ok) throw new Error(`Backend ${response.status}`);

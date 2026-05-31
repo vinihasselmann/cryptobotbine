@@ -13,7 +13,7 @@ const CANDLE_POLL_MS = 5000;
 
 async function apiFetch(path, opts = {}) {
   const res = await fetch(`${API}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     ...opts,
   });
   if (!res.ok) throw new Error(`API ${res.status}`);
