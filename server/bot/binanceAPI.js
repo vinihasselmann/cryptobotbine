@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 
-const PROD_PUBLIC  = 'https://api.binance.com';   // dados públicos (klines, ticker)
-const PROD_PRIVATE = 'https://api.binance.us';    // ordens reais (autenticadas)
+const PROD_PUBLIC  = 'https://api.binance.us';
+const PROD_PRIVATE = 'https://api.binance.us';
 const TEST = 'https://testnet.binance.vision';
 
 function basePublic(testnet)  { return testnet ? TEST : PROD_PUBLIC; }
