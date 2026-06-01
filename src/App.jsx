@@ -667,11 +667,11 @@ export default function App() {
               </div>
             </div>
             <div className="chart-stage">
-              {candles.length > 0 ? (
-                <TradingChart candles={candles} portfolio={portfolio} />
-              ) : (
-                <div className="chart-empty">Configure e inicie o bot</div>
-              )}
+              <TradingChart
+                portfolio={portfolio}
+                basePair={basePair}
+                timeframe={timeframe}
+              />
             </div>
           </div>
 
