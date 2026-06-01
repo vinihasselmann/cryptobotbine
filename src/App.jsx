@@ -361,6 +361,7 @@ function IntelligencePanel({ adaptiveModel, riskState, backendOnline }) {
 const BINANCE_PAIRS = ['ETH', 'BTC', 'SOL', 'ARB'];
 
 export default function App() {
+  const [mobileTab, setMobileTab] = useState('chart');
   const [basePair, setBasePair] = useState('ETH');
   const quotePair = 'USDT';
   const [timeframe, setTimeframe] = useState('1m');
@@ -514,7 +515,7 @@ export default function App() {
       <div className="layout">
 
         {/* ── SIDEBAR LEFT ───────────────────────────────────────────────── */}
-        <aside className="sidebar-left">
+        <aside className={`sidebar-left${mobileTab === 'portfolio' ? ' mobile-active' : ''}`}>
 
           {/* Portfolio card */}
           <div className="card">
@@ -600,7 +601,7 @@ export default function App() {
         </aside>
 
         {/* ── MAIN CENTER ────────────────────────────────────────────────── */}
-        <main className="center">
+        <main className={`center${mobileTab === 'chart' ? ' mobile-active' : ''}`}>
 
           {/* Signal bar */}
           <div className="signal-bar">
@@ -757,7 +758,7 @@ export default function App() {
         </main>
 
         {/* ── SIDEBAR RIGHT ──────────────────────────────────────────────── */}
-        <aside className="sidebar-right">
+        <aside className={`sidebar-right${mobileTab === 'bot' ? ' mobile-active' : ''}`}>
 
           {/* Bot control card */}
           <div className="card">
@@ -970,6 +971,19 @@ export default function App() {
           </div>
         </aside>
       </div>
+
+      {/* ── MOBILE NAV ───────────────────────────────────────────────────── */}
+      <nav className="mobile-nav">
+        <button className={`mobile-nav-btn${mobileTab === 'chart'     ? ' active' : ''}`} onClick={() => setMobileTab('chart')}>
+          <span>📈</span><span>Gráfico</span>
+        </button>
+        <button className={`mobile-nav-btn${mobileTab === 'portfolio' ? ' active' : ''}`} onClick={() => setMobileTab('portfolio')}>
+          <span>💼</span><span>Portfolio</span>
+        </button>
+        <button className={`mobile-nav-btn${mobileTab === 'bot'       ? ' active' : ''}`} onClick={() => setMobileTab('bot')}>
+          <span>⚙️</span><span>Bot</span>
+        </button>
+      </nav>
     </div>
   );
 }

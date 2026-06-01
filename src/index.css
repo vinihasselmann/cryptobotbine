@@ -1473,3 +1473,133 @@ body::after {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
 }
+
+/* ─── MOBILE NAV (hidden on desktop) ──────────────────────────────────────── */
+
+.mobile-nav { display: none; }
+
+/* ─── RESPONSIVE — iPhone / Mobile ────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  body {
+    overflow: auto;
+    height:   auto;
+  }
+
+  .app {
+    height:         auto;
+    min-height:     100dvh;
+    padding-bottom: 64px;
+  }
+
+  /* ── Header ── */
+  .header { padding: 8px 12px; gap: 8px; }
+  .logo-icon { width: 30px; height: 30px; font-size: 16px; }
+  .logo-title { font-size: 12px; letter-spacing: 2px; }
+  .logo-sub { display: none; }
+  .hp-price { font-size: 16px; }
+  .hp-pair  { font-size: 12px; }
+
+  /* ── Layout: stack sections, hide all except active ── */
+  .layout {
+    display:        flex;
+    flex-direction: column;
+    overflow:       visible;
+    height:         auto;
+  }
+
+  .sidebar-left,
+  .sidebar-right,
+  .center {
+    display: none;
+  }
+
+  .sidebar-left.mobile-active,
+  .sidebar-right.mobile-active {
+    display:    flex;
+    overflow-y: visible;
+    height:     auto;
+    border:     none;
+    min-height: 0;
+  }
+
+  .center.mobile-active {
+    display:    flex;
+    height:     auto;
+    overflow:   visible;
+    min-height: 0;
+  }
+
+  /* ── Chart fixes ── */
+  .chart-container {
+    height: auto;
+    flex:   none;
+  }
+
+  .chart-stage {
+    height:     420px;
+    min-height: 420px;
+    flex:       none;
+  }
+
+  /* ── Signal bar ── */
+  .signal-main { flex-wrap: wrap; gap: 8px; }
+  .signal-meter { max-width: 100%; width: 100%; order: 3; }
+  .model-breakdown { flex-direction: column; gap: 6px; }
+  .mb-name { width: 80px; }
+
+  /* ── Indicators bar ── */
+  .ind-bar { gap: 12px; padding: 6px 12px; }
+
+  /* ── Trades ── */
+  .trades-panel { max-height: 180px; }
+  .trades-table thead th:nth-child(n+4),
+  .trades-table tbody td:nth-child(n+4) { display: none; }
+
+  /* ── Cards spacing ── */
+  .card { border-radius: 6px; }
+
+  /* ── Mobile nav ── */
+  .mobile-nav {
+    display:         flex;
+    position:        fixed;
+    bottom:          0;
+    left:            0;
+    right:           0;
+    height:          64px;
+    background:      var(--bg2);
+    border-top:      1px solid var(--border2);
+    z-index:         1000;
+    padding-bottom:  env(safe-area-inset-bottom);
+  }
+
+  .mobile-nav-btn {
+    flex:            1;
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    justify-content: center;
+    gap:             3px;
+    background:      transparent;
+    border:          none;
+    color:           var(--text3);
+    cursor:          pointer;
+    font-family:     'Barlow Condensed', sans-serif;
+    font-size:       10px;
+    font-weight:     700;
+    letter-spacing:  1px;
+    text-transform:  uppercase;
+    transition:      color 0.15s;
+    padding:         6px 0;
+  }
+
+  .mobile-nav-btn span:first-child { font-size: 20px; line-height: 1; }
+
+  .mobile-nav-btn.active {
+    color: var(--cyan);
+  }
+
+  .mobile-nav-btn.active span:last-child {
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+  }
+}
