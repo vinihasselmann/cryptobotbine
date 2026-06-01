@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
 
-const PROD_PUBLIC  = 'https://api.binance.us';
+// Public market data: Binance.com is reachable from AWS; Binance.US blocks AWS IPs.
+const PROD_PUBLIC  = 'https://api.binance.com';
+// Private (orders/account): must use Binance.US for US-licensed accounts.
 const PROD_PRIVATE = 'https://api.binance.us';
 const TEST = 'https://testnet.binance.vision';
 

@@ -1,7 +1,11 @@
 import WebSocket from 'ws';
 
-const WS_BASE = 'wss://stream.binance.us:443/ws';
+// Binance.com is reachable from AWS for public market data streams.
+// Binance.US blocks AWS IPs on WebSocket connections.
+const WS_BASE = 'wss://stream.binance.com:9443/ws';
 const WS_TEST = 'wss://testnet.binance.vision/ws';
+
+const PING_INTERVAL_MS = 10 * 60 * 1000; // 10 min — Binance drops idle streams after 24h; ping keeps it alive
 
 export class BinanceKlineStream {
   constructor({ symbol, interval, onCandle, onConnect, onDisconnect, testnet = false }) {
@@ -12,7 +16,8 @@ export class BinanceKlineStream {
     this.onDisconnect = onDisconnect ?? (() => {});
     this.testnet = testnet;
     this.ws = null;
-    this.timer = null;
+    this.reconnectTimer = null;
+    this.pingTimer = null;
     this.closed = false;
     this.connectedAt = null;
   }
@@ -30,6 +35,7 @@ export class BinanceKlineStream {
 
     this.ws.on('open', () => {
       this.connectedAt = Date.now();
+      this._startPing();
       this.onConnect();
     });
 
@@ -53,16 +59,31 @@ export class BinanceKlineStream {
     this.ws.on('error', () => {}); // swallow — close triggers reconnect
 
     this.ws.on('close', () => {
+      this._stopPing();
       this.onDisconnect();
       if (!this.closed) {
-        this.timer = setTimeout(() => this._connect(), 3000);
+        this.reconnectTimer = setTimeout(() => this._connect(), 3000);
       }
     });
   }
 
+  _startPing() {
+    this._stopPing();
+    this.pingTimer = setInterval(() => {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.ping();
+      }
+    }, PING_INTERVAL_MS);
+  }
+
+  _stopPing() {
+    if (this.pingTimer) { clearInterval(this.pingTimer); this.pingTimer = null; }
+  }
+
   stop() {
     this.closed = true;
-    if (this.timer) { clearTimeout(this.timer); this.timer = null; }
+    this._stopPing();
+    if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
     if (this.ws) { try { this.ws.terminate(); } catch {} this.ws = null; }
   }
 

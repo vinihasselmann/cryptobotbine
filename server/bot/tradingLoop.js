@@ -2,12 +2,12 @@ import { extractFeatures } from './indicators.js';
 import { mlPredict } from './strategies.js';
 import { AdaptiveModel } from './adaptiveModel.js';
 import { RiskManager } from './riskManager.js';
-import { BinanceKlineStream } from './binanceWS.js';
+import { BybitKlineStream } from './bybitWS.js';
 import {
-  getBinanceSymbol, getBaseAsset, getQuoteAsset,
+  getBybitSymbol, getBaseAsset, getQuoteAsset,
   getKlines, get24h, marketBuy, marketSell,
   getLotSize, floorQty, getBalance,
-} from './binanceAPI.js';
+} from './bybitAPI.js';
 import { db } from '../db.js';
 
 // ── Candle aggregation (1m → 5m, 15m, etc.) ──────────────────────────────────
@@ -30,7 +30,7 @@ function aggregateCandles(candles, targetMs) {
 
 const TF_CONFIG = {
   '1m':  { interval: '1m',  aggregateMs: 60_000 },
-  '3m':  { interval: '1m',  aggregateMs: 180_000 },
+  '3m':  { interval: '3m',  aggregateMs: 180_000 },
   '5m':  { interval: '5m',  aggregateMs: 300_000 },
   '15m': { interval: '15m', aggregateMs: 900_000 },
   '1h':  { interval: '1h',  aggregateMs: 3_600_000 },
@@ -56,9 +56,9 @@ export class TradingLoop {
       stopLoss: 2.5, takeProfit: 5.0, minConfidence: 35,
       paper: { feePct: 0.10, slippagePct: 0.03, latencyMs: 450 },
     };
-    this.apiKey    = process.env.BINANCE_API_KEY || '';
-    this.apiSecret = process.env.BINANCE_API_SECRET || '';
-    this.testnet   = process.env.BINANCE_TESTNET === 'true';
+    this.apiKey    = process.env.BYBIT_API_KEY    || process.env.BINANCE_API_KEY    || '';
+    this.apiSecret = process.env.BYBIT_API_SECRET || process.env.BINANCE_API_SECRET || '';
+    this.testnet   = process.env.BYBIT_TESTNET === 'true';
 
     this.candles      = [];
     this.prediction   = null;
@@ -84,8 +84,8 @@ export class TradingLoop {
     Object.assign(this.config, cfg);
     this.state = 'running';
 
-    const symbol = getBinanceSymbol(this.config.basePair);
-    if (!symbol) { this._log('error', `Sem par Binance para ${this.config.basePair}`); this.state = 'idle'; return; }
+    const symbol = getBybitSymbol(this.config.basePair);
+    if (!symbol) { this._log('error', `Sem par Bybit para ${this.config.basePair}`); this.state = 'idle'; return; }
 
     const tf = TF_CONFIG[this.config.timeframe] ?? TF_CONFIG['1m'];
 
@@ -106,7 +106,7 @@ export class TradingLoop {
 
     // Load portfolio from journal for real mode
     if (this.config.executionMode === 'real') {
-      await this._syncPortfolioFromBinance(symbol);
+      await this._syncPortfolioFromBybit(symbol);
     }
 
     // Train adaptive model from saved journal
@@ -116,14 +116,14 @@ export class TradingLoop {
     } catch {}
 
     // Start WebSocket
-    this.ws = new BinanceKlineStream({
+    this.ws = new BybitKlineStream({
       symbol, interval: tf.interval, testnet: this.testnet,
       onCandle: c => this._onCandle(c, tf.aggregateMs),
-      onConnect: () => this._log('info', `WebSocket conectado: ${symbol} ${tf.interval}`),
+      onConnect: () => this._log('info', `WebSocket Bybit conectado: ${symbol} ${tf.interval}`),
       onDisconnect: () => { if (this.state === 'running') this._log('warn', 'WebSocket desconectado — reconectando...'); },
     });
     this.ws.start();
-    this._log('info', `Bot iniciado | ${this.config.basePair} | ${this.config.strategy} | ${this.config.executionMode}`);
+    this._log('info', `Bot iniciado | ${this.config.basePair} | ${this.config.strategy} | ${this.config.executionMode} | Bybit`);
   }
 
   pause()  { if (this.state === 'running') { this.state = 'paused';  this._log('info', 'Bot pausado'); } }
@@ -234,14 +234,14 @@ export class TradingLoop {
 
     try {
       if (mode === 'real') {
-        const symbol = getBinanceSymbol(this.config.basePair);
+        const symbol = getBybitSymbol(this.config.basePair);
         const { stepSize, minNotional } = await getLotSize(symbol, this.testnet);
-        if (amount < minNotional) { this._log('warn', `Valor mínimo Binance: $${minNotional}`); return; }
+        if (amount < minNotional) { this._log('warn', `Valor mínimo Bybit: $${minNotional}`); return; }
         const order = await marketBuy(symbol, amount, this.apiKey, this.apiSecret, this.testnet);
         qty = parseFloat(order.executedQty);
         const spent = parseFloat(order.cummulativeQuoteQty);
         fillPrice = qty > 0 ? spent / qty : price;
-        this._log('info', `Binance BUY executado: ${qty} ${this.config.basePair} @ $${fillPrice.toFixed(4)}`);
+        this._log('info', `Bybit BUY executado: ${qty} ${this.config.basePair} @ $${fillPrice.toFixed(4)}`);
       } else if (mode === 'paper') {
         const { fill, fee } = paperFill('buy', price, this.config.paper);
         fillPrice = fill;
@@ -274,13 +274,13 @@ export class TradingLoop {
 
     try {
       if (mode === 'real') {
-        const symbol = getBinanceSymbol(this.config.basePair);
+        const symbol = getBybitSymbol(this.config.basePair);
         const { stepSize } = await getLotSize(symbol, this.testnet);
         const qty = floorQty(pf.crypto, stepSize);
         const order = await marketSell(symbol, qty, this.apiKey, this.apiSecret, this.testnet);
         sellValue = parseFloat(order.cummulativeQuoteQty);
         fillPrice = qty > 0 ? sellValue / qty : price;
-        this._log('info', `Binance SELL executado: ${qty} ${this.config.basePair} @ $${fillPrice.toFixed(4)}`);
+        this._log('info', `Bybit SELL executado: ${qty} ${this.config.basePair} @ $${fillPrice.toFixed(4)}`);
       } else if (mode === 'paper') {
         const { fill, fee } = paperFill('sell', price, this.config.paper);
         fillPrice = fill;
@@ -356,19 +356,19 @@ export class TradingLoop {
 
   // ── Real mode: sync portfolio from Binance ──────────────────────────────────
 
-  async _syncPortfolioFromBinance(symbol) {
+  async _syncPortfolioFromBybit(symbol) {
     if (!this.apiKey || !this.apiSecret) return;
     try {
       const quote = getQuoteAsset(symbol);
-      const base = getBaseAsset(symbol);
+      const base  = getBaseAsset(symbol);
       const [usd, crypto] = await Promise.all([
         getBalance(quote, this.apiKey, this.apiSecret, this.testnet),
-        getBalance(base, this.apiKey, this.apiSecret, this.testnet),
+        getBalance(base,  this.apiKey, this.apiSecret, this.testnet),
       ]);
       this.portfolio = { usd, crypto, buyPrice: 0, costBasis: 0 };
-      this._log('info', `Saldo Binance: ${usd.toFixed(2)} ${quote} | ${crypto.toFixed(6)} ${base}`);
+      this._log('info', `Saldo Bybit: ${usd.toFixed(2)} ${quote} | ${crypto.toFixed(6)} ${base}`);
     } catch (e) {
-      this._log('warn', `Falha ao carregar saldo Binance: ${e.message}`);
+      this._log('warn', `Falha ao carregar saldo Bybit: ${e.message}`);
     }
   }
 

@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 
 const PAIR_MAP = {
-  ETH: 'BINANCE:ETHUSDT',
-  BTC: 'BINANCE:BTCUSDT',
-  SOL: 'BINANCE:SOLUSDT',
-  ARB: 'BINANCE:ARBUSDT',
+  ETH: 'BYBIT:ETHUSDT',
+  BTC: 'BYBIT:BTCUSDT',
+  SOL: 'BYBIT:SOLUSDT',
+  ARB: 'BYBIT:ARBUSDT',
 };
 
 const TF_MAP = {
@@ -31,7 +31,7 @@ export function TradingChart({ portfolio, basePair = 'ETH', timeframe = '1m' }) 
   const containerRef = useRef(null);
   const widgetRef    = useRef(null);
 
-  const symbol   = PAIR_MAP[basePair] ?? 'BINANCE:ETHUSDT';
+  const symbol   = PAIR_MAP[basePair] ?? 'BYBIT:ETHUSDT';
   const interval = TF_MAP[timeframe] ?? '1';
 
   useEffect(() => {

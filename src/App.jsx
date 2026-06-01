@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useWallet }       from './hooks/useWallet';
 import { useTradingBot }   from './hooks/useTradingBot';
-import { TIMEFRAMES }      from './services/priceService';
 import {
   clearJournal,
   getJournal,
@@ -476,7 +475,7 @@ export default function App() {
           <span className="logo-icon">⚡</span>
           <div>
             <div className="logo-title">DEFI BOT ML</div>
-            <div className="logo-sub">Binance · AI · 24/7</div>
+            <div className="logo-sub">Bybit · AI · 24/7</div>
           </div>
         </div>
 
@@ -649,23 +648,6 @@ export default function App() {
 
           {/* Chart */}
           <div className="chart-container">
-            <div className="chart-toolbar">
-              <div className="chart-market-label">
-                <span>{basePair}/{quotePair}</span>
-                <span>{timeframe}</span>
-              </div>
-              <div className="timeframe-tabs" aria-label="Timeframe do gráfico">
-                {TIMEFRAMES.map((tf) => (
-                  <button
-                    key={tf.value}
-                    className={'timeframe-tab' + (timeframe === tf.value ? ' active' : '')}
-                    onClick={() => setTimeframe(tf.value)}
-                  >
-                    {tf.label}
-                  </button>
-                ))}
-              </div>
-            </div>
             <div className="chart-stage">
               <TradingChart
                 portfolio={portfolio}
@@ -822,7 +804,7 @@ export default function App() {
             </div>
             {config.executionMode === 'real' && (
               <div className="warning-box">
-                ⚠️ Modo real usa Binance API Key configurada no servidor.
+                ⚠️ Modo real usa Bybit API Key configurada no servidor.
               </div>
             )}
             {config.executionMode === 'paper' && (
@@ -836,7 +818,7 @@ export default function App() {
 
           {/* Pair selector */}
           <div className="card">
-            <div className="card-title">Par (Binance.US)</div>
+            <div className="card-title">Par (Bybit)</div>
             <div className="chain-options">
               {BINANCE_PAIRS.map(pair => (
                 <button
