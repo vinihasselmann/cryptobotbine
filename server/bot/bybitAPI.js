@@ -3,7 +3,9 @@ import crypto from 'node:crypto';
 const BASE_URL = 'https://api.bybit.com';
 const TEST_URL = 'https://api-testnet.bybit.com';
 
-function base(testnet) { return testnet ? TEST_URL : BASE_URL; }
+// Public market data always uses production — testnet has no real kline/ticker data
+function pubBase()          { return BASE_URL; }
+function privBase(testnet)  { return testnet ? TEST_URL : BASE_URL; }
 
 // Bybit V5 signature: HMAC-SHA256 of "{timestamp}{apiKey}{recvWindow}{payload}"
 function sign(timestamp, apiKey, recvWindow, payload, secret) {
@@ -11,32 +13,33 @@ function sign(timestamp, apiKey, recvWindow, payload, secret) {
   return crypto.createHmac('sha256', secret).update(str).digest('hex');
 }
 
-async function pub(path, params = {}, testnet = false) {
-  const qs = new URLSearchParams(params).toString();
-  const res = await fetch(`${base(testnet)}${path}?${qs}`);
+async function pub(path, params = {}) {
+  const qs  = new URLSearchParams(params).toString();
+  const res = await fetch(`${pubBase()}${path}?${qs}`);
   const data = await res.json();
   if (data.retCode !== 0) throw new Error(data.retMsg || `Bybit ${path}`);
   return data.result;
 }
 
 async function priv(method, path, params, apiKey, secret, testnet = false) {
-  const timestamp = Date.now().toString();
+  const timestamp  = Date.now().toString();
   const recvWindow = '5000';
-  const payload = method === 'GET'
+  const payload    = method === 'GET'
     ? new URLSearchParams(params).toString()
     : JSON.stringify(params);
   const sig = sign(timestamp, apiKey, recvWindow, payload, secret);
 
   const headers = {
-    'X-BAPI-API-KEY':      apiKey,
-    'X-BAPI-SIGN':         sig,
-    'X-BAPI-SIGN-TYPE':    '2',
-    'X-BAPI-TIMESTAMP':    timestamp,
-    'X-BAPI-RECV-WINDOW':  recvWindow,
-    'Content-Type':        'application/json',
+    'X-BAPI-API-KEY':     apiKey,
+    'X-BAPI-SIGN':        sig,
+    'X-BAPI-SIGN-TYPE':   '2',
+    'X-BAPI-TIMESTAMP':   timestamp,
+    'X-BAPI-RECV-WINDOW': recvWindow,
+    'Content-Type':       'application/json',
   };
 
-  const url  = method === 'GET' ? `${base(testnet)}${path}?${payload}` : `${base(testnet)}${path}`;
+  const base = privBase(testnet);
+  const url  = method === 'GET' ? `${base}${path}?${payload}` : `${base}${path}`;
   const opts = method === 'GET' ? { method, headers } : { method, headers, body: payload };
 
   const res  = await fetch(url, opts);
@@ -55,10 +58,10 @@ export function mapInterval(interval) { return INTERVAL_MAP[interval] ?? '1'; }
 
 // ── Market data ───────────────────────────────────────────────────────────────
 
-export async function getKlines(symbol, interval, limit = 200, testnet = false) {
+export async function getKlines(symbol, interval, limit = 200, _testnet = false) {
   const data = await pub('/v5/market/kline', {
     category: 'spot', symbol, interval: mapInterval(interval), limit,
-  }, testnet);
+  });
   // Bybit returns newest-first — reverse for chronological order
   return (data.list ?? []).reverse().map(k => ({
     ts:     parseInt(k[0]),
@@ -70,8 +73,8 @@ export async function getKlines(symbol, interval, limit = 200, testnet = false) 
   }));
 }
 
-export async function get24h(symbol, testnet = false) {
-  const data = await pub('/v5/market/tickers', { category: 'spot', symbol }, testnet);
+export async function get24h(symbol, _testnet = false) {
+  const data = await pub('/v5/market/tickers', { category: 'spot', symbol });
   const t = data.list?.[0] ?? {};
   return {
     priceChangePercent: parseFloat(t.price24hPcnt ?? 0) * 100,
@@ -85,8 +88,8 @@ export async function getPrice(symbol, testnet = false) {
 
 // ── Instruments info ──────────────────────────────────────────────────────────
 
-export async function getLotSize(symbol, testnet = false) {
-  const data = await pub('/v5/market/instruments-info', { category: 'spot', symbol }, testnet);
+export async function getLotSize(symbol, _testnet = false) {
+  const data = await pub('/v5/market/instruments-info', { category: 'spot', symbol });
   const f = data.list?.[0]?.lotSizeFilter ?? {};
   return {
     stepSize:    parseFloat(f.basePrecision ?? '0.00001'),

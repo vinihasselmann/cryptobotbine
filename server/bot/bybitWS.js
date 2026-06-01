@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
 
+// Always use production for public market data — testnet has no real kline stream
 const WS_PUBLIC = 'wss://stream.bybit.com/v5/public/spot';
-const WS_TEST   = 'wss://stream-testnet.bybit.com/v5/public/spot';
 
 // Bybit requires a ping every 20s or the server drops the connection
 const PING_INTERVAL_MS = 20_000;
@@ -32,7 +32,7 @@ export class BybitKlineStream {
 
   _connect() {
     if (this.closed) return;
-    this.ws = new WebSocket(this.testnet ? WS_TEST : WS_PUBLIC);
+    this.ws = new WebSocket(WS_PUBLIC);
 
     this.ws.on('open', () => {
       // Subscribe to the kline topic
